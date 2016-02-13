@@ -1,0 +1,77 @@
+#! /bin/bash
+
+# ************************************************
+# Versiones disponibles de MySQL
+# 5, 5.5, 5.5.47, 5.6, 5.6.28, 5.7, 5.7.10, latest
+#
+# Referencias de docker
+# * https://docs.docker.com/engine/reference/commandline/run/
+#
+# Containers usados
+# * https://hub.docker.com/r/jpetazzo/nsenter/
+# * https://hub.docker.com/r/ctlc/ambassador/
+# * https://hub.docker.com/_/mysql/
+# * https://hub.docker.com/_/redmine/
+# ************************************************
+
+MYSQL_VERSION="latest"
+
+MYSQL_ROOT_PASSWD="password"
+
+MYSQL_PUBLISH="0.0.0.0:3406"
+REDMINE_PUBLISH="0.0.0.0:3031"
+
+MYSQL_CONTAINER_NAME="mysql_container"
+REDMINE_CONTAINER_NAME="redmine_container"
+AMBASSADOR="ambassador"
+
+
+# Instala en tú máquina el comando `docker-enter <container>` para poder explorar sus archivos
+#docker run --rm -v /usr/local/bin:/target jpetazzo/nsenter
+
+# No descomentar estas líneas si no se está seguro de los riegos que podrían tener para sus contenedores
+#echo "Los siguientes contenedores serán parados para su posterior borrado:"
+#docker stop $REDMINE_CONTAINER_NAME"_"$AMBASSADOR $REDMINE_CONTAINER_NAME $MYSQL_CONTAINER_NAME"_"$AMBASSADOR $MYSQL_CONTAINER_NAME
+#echo ""
+
+#echo "Los siguientes contenedores han sido borrados:"
+#docker rm $REDMINE_CONTAINER_NAME"_"$AMBASSADOR $REDMINE_CONTAINER_NAME $MYSQL_CONTAINER_NAME"_"$AMBASSADOR $MYSQL_CONTAINER_NAME
+#echo ""
+
+# MySQL
+echo "Instalando contenedor de MySQL"
+docker run --name $MYSQL_CONTAINER_NAME -e MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWD -e MYSQL_DATABASE=redmine -d mysql:$MYSQL_VERSION
+#-v $HOME/.dker/mysql/conf.d:/etc/mysql/conf.d
+echo "hecho!"
+echo ""
+
+echo "Creando un embajador para MySQL"
+# Ambassador for MySQL
+docker run -d --link $MYSQL_CONTAINER_NAME:mysql --name $MYSQL_CONTAINER_NAME"_"$AMBASSADOR -p $MYSQL_PUBLISH":3306" ctlc/ambassador
+docker stop $MYSQL_CONTAINER_NAME"_"$AMBASSADOR
+echo "hecho!"
+echo ""
+
+# Retraso para darle tiempo a MySQL a iniciar
+sleep 5
+echo "Liberando bugs..."
+sleep 5
+echo "Bugs sueltos por el sistema..."
+sleep 5
+echo "Los bugs han formado una tribu en la torre Input/Output"
+sleep 5
+echo "Los bugs no tenían un sistema democrático viable y se han matado entre ellos..."
+echo "todos lloraremos por los bugs :'("
+echo ""
+
+# Redmine
+echo "Instalando contenedor de Redmine"
+docker run -d --name $REDMINE_CONTAINER_NAME --link $MYSQL_CONTAINER_NAME:mysql redmine
+#-v $HOME/.dker/redmine/datadir:/usr/src/redmine/files
+echo "hecho!"
+echo ""
+
+# Ambassador for Redmine
+echo "Creando un embajador para Redmine"
+docker run -d --link $REDMINE_CONTAINER_NAME:redmine --name $REDMINE_CONTAINER_NAME"_"$AMBASSADOR -p $REDMINE_PUBLISH":3000" ctlc/ambassador
+echo "hecho!"
